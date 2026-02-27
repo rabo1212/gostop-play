@@ -8,11 +8,11 @@ import { useSessionStore } from '@/stores/useSessionStore';
 import { saveRecord } from '@/lib/history';
 import GameTable from '@/components/game/GameTable';
 import SessionResultModal from '@/components/game/SessionResultModal';
+import OnlineGameTable from '@/components/game/OnlineGameTable';
 
-function GameContent() {
+/** 오프라인 (AI 대전) 게임 */
+function OfflineGameContent({ diff }: { diff: Difficulty }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const diff = (searchParams.get('difficulty') as Difficulty) || 'normal';
   const phase = useGameStore(s => s.phase);
   const initGame = useGameStore(s => s.initGame);
   const winner = useGameStore(s => s.winner);
@@ -33,7 +33,6 @@ function GameContent() {
   const savedRef = useRef(false);
   const recordedRoundRef = useRef(-1);
 
-  // 세션 시작 + 첫 라운드
   useEffect(() => {
     savedRef.current = false;
     recordedRoundRef.current = -1;
@@ -41,7 +40,6 @@ function GameContent() {
     initGame(diff);
   }, [diff, initGame, startSession]);
 
-  // 게임 종료 시 전적 저장 + 라운드 기록
   useEffect(() => {
     if (phase !== 'game-over') return;
     if (savedRef.current) return;
@@ -57,20 +55,17 @@ function GameContent() {
       difficulty: diff,
     });
 
-    // 세션에 라운드 기록
     if (_state && session && recordedRoundRef.current < session.currentRound) {
       recordedRoundRef.current = session.currentRound;
       recordRound(_state);
     }
   }, [phase, winner, gameResult, turnCount, diff, _state, session, recordRound]);
 
-  // 다음 판 진행
   const handleNextRound = useCallback(() => {
     savedRef.current = false;
     initGame(diff);
   }, [diff, initGame]);
 
-  // 세션 종료 후 다시하기
   const handleRestartSession = useCallback(() => {
     endSession();
     savedRef.current = false;
@@ -97,15 +92,11 @@ function GameContent() {
   const sessionOver = getIsSessionOver();
   const roundLabel = isActive ? `${maxRounds}판 중 ${currentRound + 1}번째` : undefined;
 
-  // 세션 종합 결과 표시
   if (phase === 'game-over' && sessionOver && isActive) {
     const playerNames = players.map(p => p.name);
     return (
       <>
-        <GameTable
-          onBackToMenu={handleBackToMenu}
-          roundLabel={roundLabel}
-        />
+        <GameTable onBackToMenu={handleBackToMenu} roundLabel={roundLabel} />
         <SessionResultModal
           ranking={getRanking()}
           roundHistory={getRoundHistory()}
@@ -124,6 +115,21 @@ function GameContent() {
       roundLabel={roundLabel}
     />
   );
+}
+
+/** 게임 라우터: 온라인/오프라인 분기 */
+function GameContent() {
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
+  const roomId = searchParams.get('roomId');
+  const roomCode = searchParams.get('code');
+  const diff = (searchParams.get('difficulty') as Difficulty) || 'normal';
+
+  if (mode === 'online' && roomId && roomCode) {
+    return <OnlineGameTable roomId={roomId} roomCode={roomCode} />;
+  }
+
+  return <OfflineGameContent diff={diff} />;
 }
 
 export default function GamePage() {

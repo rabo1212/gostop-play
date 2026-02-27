@@ -195,6 +195,15 @@ export default function Home() {
         >
           AI 대전
         </button>
+
+        <button
+          className="w-full py-3 sm:py-3.5 rounded-xl font-bold text-sm sm:text-base transition-all cursor-pointer
+            bg-panel-light border border-gold/20 text-gold
+            hover:bg-gold/10 hover:border-gold/40 active:scale-[0.98] mt-3"
+          onClick={() => router.push('/lobby')}
+        >
+          온라인 대전
+        </button>
       </div>
 
       {/* 규칙 링크 */}
