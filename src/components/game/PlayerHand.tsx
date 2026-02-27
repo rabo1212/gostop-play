@@ -12,8 +12,8 @@ interface PlayerHandProps {
 
 export default function PlayerHand({ hand, selectedCard, canPlay, onCardClick }: PlayerHandProps) {
   return (
-    <div className="flex justify-center">
-      <div className="flex" style={{ gap: -4 }}>
+    <div className="flex justify-center overflow-x-auto no-scrollbar px-1">
+      <div className="flex shrink-0" style={{ gap: -4 }}>
         {hand.map((cardId, i) => {
           const isSelected = cardId === selectedCard;
           return (

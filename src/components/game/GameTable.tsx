@@ -233,7 +233,7 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
   const isMatchSelect = isMyTurn && (phase === 'hand-match-select' || phase === 'draw-match-select');
 
   return (
-    <div className="table-bg fixed inset-0 flex flex-col overflow-hidden">
+    <div className="table-bg fixed inset-0 flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
 
       {/* ===== 상단: AI 플레이어들 ===== */}
       <div className="flex justify-around items-start pt-2 px-3">
@@ -284,7 +284,7 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
       </div>
 
       {/* ===== 하단: 내 영역 ===== */}
-      <div className="pb-2 px-2 space-y-1.5">
+      <div className="pb-3 px-2 space-y-1.5 shrink-0">
         {/* 점수판 + 먹은 패 */}
         <div className="flex items-start gap-2">
           <ScoreBoard score={myScore} goCount={myPlayer.goCount} />

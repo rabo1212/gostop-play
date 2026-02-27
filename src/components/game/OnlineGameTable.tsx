@@ -150,7 +150,7 @@ export default function OnlineGameTable({ roomId, roomCode }: OnlineGameTablePro
   const turnPlayerName = rotatedPlayers[rotatedTurnIndex]?.name || '';
 
   return (
-    <div className="table-bg fixed inset-0 flex flex-col overflow-hidden">
+    <div className="table-bg fixed inset-0 flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
 
       {/* 연결 상태 배너 */}
       {connectionStatus !== 'connected' && (
@@ -214,7 +214,7 @@ export default function OnlineGameTable({ roomId, roomCode }: OnlineGameTablePro
       </div>
 
       {/* 하단: 내 영역 */}
-      <div className="pb-2 px-2 space-y-1.5">
+      <div className="pb-3 px-2 space-y-1.5 shrink-0">
         <div className="flex items-start gap-2">
           <ScoreBoard score={myScore} goCount={myPlayer.goCount} />
           <div className="flex-1 overflow-x-auto no-scrollbar">
