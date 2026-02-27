@@ -14,6 +14,7 @@ interface HwatuCardProps {
   onClick?: (cardId: CardId) => void;
   flipAnimation?: boolean;
   className?: string;
+  zone?: string;
 }
 
 const SIZES = {
@@ -118,6 +119,7 @@ function HwatuCard({
   onClick,
   flipAnimation = false,
   className = '',
+  zone,
 }: HwatuCardProps) {
   const [flipped, setFlipped] = useState(!faceDown);
   const dim = SIZES[size];
@@ -132,12 +134,17 @@ function HwatuCard({
     }
   };
 
+  const dataAttrs: Record<string, string | number | undefined> = {};
+  if (cardId !== undefined) dataAttrs['data-card-id'] = cardId;
+  if (zone) dataAttrs['data-card-zone'] = zone;
+
   if (flipAnimation) {
     return (
       <div
         className={`hwatu-card-container inline-block ${className}`}
         style={{ width: dim.w, height: dim.h }}
         onClick={handleClick}
+        {...dataAttrs}
       >
         <div
           className={`hwatu-card-flipper ${flipped ? 'flipped' : ''}`}
@@ -161,6 +168,7 @@ function HwatuCard({
       <div
         className={`inline-block ${className}`}
         style={{ width: dim.w, height: dim.h }}
+        {...dataAttrs}
       >
         <CardBack width={dim.w} height={dim.h} />
       </div>
@@ -178,6 +186,7 @@ function HwatuCard({
         cursor: interactive ? 'pointer' : 'default',
       }}
       onClick={handleClick}
+      {...dataAttrs}
     >
       <CardFace cardId={cardId} width={dim.w} height={dim.h} />
     </div>

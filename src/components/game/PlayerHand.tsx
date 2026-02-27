@@ -32,6 +32,7 @@ export default function PlayerHand({ hand, selectedCard, canPlay, onCardClick }:
                 selected={isSelected}
                 interactive={canPlay}
                 onClick={onCardClick}
+                zone="hand-0"
               />
             </div>
           );

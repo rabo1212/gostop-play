@@ -6,11 +6,12 @@ interface OpponentHandProps {
   cardCount: number;
   name: string;
   goCount: number;
+  id?: number;
 }
 
-export default function OpponentHand({ cardCount, name, goCount }: OpponentHandProps) {
+export default function OpponentHand({ cardCount, name, goCount, id }: OpponentHandProps) {
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1" data-zone={id !== undefined ? `opponent-${id}` : undefined}>
       <div className="flex items-center gap-2">
         <span className="text-xs text-text-secondary font-bold">{name}</span>
         {goCount > 0 && (

@@ -7,14 +7,15 @@ import HwatuCard from './HwatuCard';
 interface CapturedCardsProps {
   captured: CapturedType;
   compact?: boolean;
+  playerId?: number;
 }
 
-export default function CapturedCards({ captured, compact = false }: CapturedCardsProps) {
+export default function CapturedCards({ captured, compact = false, playerId }: CapturedCardsProps) {
   const piCount = countPiValue(captured.pi);
   const size = compact ? 'xs' : 'sm';
 
   return (
-    <div className={`flex flex-col ${compact ? 'gap-0.5' : 'gap-1'}`}>
+    <div className={`flex flex-col ${compact ? 'gap-0.5' : 'gap-1'}`} data-zone={playerId !== undefined ? `captured-${playerId}` : undefined}>
       {/* 광 */}
       {captured.gwang.length > 0 && (
         <Row label="광" count={captured.gwang.length} cards={captured.gwang} size={size} color="text-hwatu-gold" />

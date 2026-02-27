@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { CardId } from '@/engine/types';
 import { useGameStore } from '@/stores/useGameStore';
 import { useGameLoop } from '@/hooks/useGameLoop';
@@ -8,6 +8,8 @@ import { calculateScore } from '@/engine/scoring';
 import { checkBombOptions } from '@/engine/match-resolver';
 import { playCardPlace, playCardCapture, playEvent, playGo, playStop, playGameOver } from '@/lib/sound';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useAnimationStore, animId } from '@/stores/useAnimationStore';
+import { captureCardPosition, captureZoneCenter, prefersReducedMotion } from '@/hooks/useCardPositions';
 
 import PlayerHand from './PlayerHand';
 import OpponentHand from './OpponentHand';
@@ -18,6 +20,7 @@ import ScoreBoard from './ScoreBoard';
 import EventPopup from './EventPopup';
 import GoStopModal from './GoStopModal';
 import GameOverModal from './GameOverModal';
+import AnimationLayer from './AnimationLayer';
 
 interface GameTableProps {
   onBackToMenu: () => void;
@@ -38,6 +41,7 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
   const goStopPlayer = useGameStore(s => s.goStopPlayer);
   const difficulty = useGameStore(s => s.difficulty);
   const _state = useGameStore(s => s._state);
+  const lastCaptured = useGameStore(s => s.lastCaptured);
 
   const playerPlayCard = useGameStore(s => s.playerPlayCard);
   const playerSelectMatch = useGameStore(s => s.playerSelectMatch);
@@ -49,9 +53,14 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
   const initGame = useGameStore(s => s.initGame);
 
   const soundEnabled = useSettingsStore(s => s.soundEnabled);
+  const enqueue = useAnimationStore(s => s.enqueue);
+  const enqueueBatch = useAnimationStore(s => s.enqueueBatch);
 
   const [selectedCard, setSelectedCard] = useState<CardId | null>(null);
   const [showEvent, setShowEvent] = useState(false);
+
+  // 캡처 애니메이션용 이전 상태 추적
+  const prevPhaseRef = useRef(phase);
 
   // AI 자동 진행
   useGameLoop();
@@ -81,6 +90,38 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
     }
   }, [phase, soundEnabled]);
 
+  // ====== 먹기 애니메이션 (resolve-capture 진입 시) ======
+  useEffect(() => {
+    if (phase === 'resolve-capture' && prevPhaseRef.current !== 'resolve-capture') {
+      if (!prefersReducedMotion() && lastCaptured.length > 0) {
+        const currentTurn = useGameStore.getState().turnIndex;
+        const capturedZone = currentTurn === 0 ? 'captured-0' : `captured-${currentTurn}`;
+        const toRect = captureZoneCenter(capturedZone);
+
+        const anims = lastCaptured
+          .map((cardId, i) => {
+            const fromRect = captureCardPosition(cardId, 'table');
+            if (!fromRect || !toRect) return null;
+            return {
+              id: animId('cap'),
+              cardId,
+              fromRect,
+              toRect: { left: toRect.left, top: toRect.top, width: 36, height: 54 },
+              type: 'capture' as const,
+              duration: 300,
+              delay: i * 50,
+            };
+          })
+          .filter((a): a is NonNullable<typeof a> => a !== null);
+
+        if (anims.length > 0) {
+          enqueueBatch(anims);
+        }
+      }
+    }
+    prevPhaseRef.current = phase;
+  }, [phase, lastCaptured, enqueueBatch]);
+
   // 플레이어 턴 자동 진행 (draw, resolve-capture)
   useEffect(() => {
     if (!isMyTurn) return;
@@ -88,32 +129,85 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
     if (phase === 'draw') {
       const timer = setTimeout(() => {
         if (useGameStore.getState().phase !== 'draw') return;
+
+        // 뽑기 애니메이션
+        if (!prefersReducedMotion()) {
+          const fromRect = captureZoneCenter('draw');
+          if (fromRect) {
+            const drawFromRect = { left: fromRect.left, top: fromRect.top, width: 48, height: 72 };
+            playerDrawCard();
+            requestAnimationFrame(() => {
+              const state = useGameStore.getState();
+              const drawnCardId = state.currentTurnAction?.drawnCardId;
+              if (drawnCardId !== undefined && drawnCardId !== null) {
+                const toRect = captureCardPosition(drawnCardId, 'table') || captureZoneCenter('table');
+                if (toRect) {
+                  enqueue({
+                    id: animId('draw'),
+                    cardId: drawnCardId,
+                    fromRect: drawFromRect,
+                    toRect,
+                    type: 'draw',
+                    faceDown: true,
+                    flipMidway: true,
+                    duration: 300,
+                    delay: 0,
+                  });
+                }
+              }
+            });
+            return;
+          }
+        }
         playerDrawCard();
-      }, 300);
+      }, 350);
       return () => clearTimeout(timer);
     }
 
     if (phase === 'resolve-capture') {
       const timer = setTimeout(() => {
         if (useGameStore.getState().phase !== 'resolve-capture') return;
+        if (soundEnabled) playCardCapture();
         playerResolveCapture();
-      }, 300);
+      }, 400);
       return () => clearTimeout(timer);
     }
-  }, [phase, isMyTurn, playerDrawCard, playerResolveCapture]);
+  }, [phase, isMyTurn, playerDrawCard, playerResolveCapture, enqueue, soundEnabled]);
 
-  // 카드 클릭 핸들러
+  // 카드 클릭 핸들러 (애니메이션 포함)
   const handleCardClick = useCallback((cardId: CardId) => {
     if (!isMyTurn || phase !== 'play-hand') return;
 
     if (selectedCard === cardId) {
+      // 출발 위치 캡처
+      const fromRect = captureCardPosition(cardId, 'hand-0');
+
+      // 상태 변경
       playerPlayCard(cardId);
       setSelectedCard(null);
       if (soundEnabled) playCardPlace();
+
+      // 애니메이션 등록
+      if (fromRect && !prefersReducedMotion()) {
+        requestAnimationFrame(() => {
+          const toRect = captureCardPosition(cardId, 'table') || captureZoneCenter('table');
+          if (toRect) {
+            enqueue({
+              id: animId('play'),
+              cardId,
+              fromRect,
+              toRect,
+              type: 'play',
+              duration: 250,
+              delay: 0,
+            });
+          }
+        });
+      }
     } else {
       setSelectedCard(cardId);
     }
-  }, [isMyTurn, phase, selectedCard, playerPlayCard, soundEnabled]);
+  }, [isMyTurn, phase, selectedCard, playerPlayCard, soundEnabled, enqueue]);
 
   // 매칭 선택 핸들러
   const handleMatchSelect = useCallback((targetId: CardId) => {
@@ -153,8 +247,9 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
               cardCount={ai.hand.length}
               name={ai.name}
               goCount={ai.goCount}
+              id={ai.id}
             />
-            <CapturedCards captured={ai.captured} compact />
+            <CapturedCards captured={ai.captured} compact playerId={ai.id} />
           </div>
         ))}
       </div>
@@ -198,7 +293,7 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
         <div className="flex items-start gap-2">
           <ScoreBoard score={myScore} goCount={myPlayer.goCount} />
           <div className="flex-1 overflow-x-auto no-scrollbar">
-            <CapturedCards captured={myPlayer.captured} compact />
+            <CapturedCards captured={myPlayer.captured} compact playerId={0} />
           </div>
         </div>
 
@@ -234,6 +329,9 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
       </div>
 
       {/* ===== 오버레이 ===== */}
+
+      {/* 애니메이션 레이어 */}
+      <AnimationLayer />
 
       {/* 이벤트 팝업 */}
       {showEvent && lastEvent !== 'none' && (

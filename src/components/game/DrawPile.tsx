@@ -21,7 +21,7 @@ export default function DrawPile({ remaining }: DrawPileProps) {
   const layers = Math.min(remaining, 4);
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1" data-zone="draw">
       <div className="relative" style={{ width: 48 + layers * 2, height: 72 + layers * 2 }}>
         {Array.from({ length: layers }).map((_, i) => (
           <div

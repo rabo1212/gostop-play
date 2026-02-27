@@ -268,5 +268,46 @@ input, textarea, [contenteditable] {
   }
 }
 
+/* =============================================
+   카드 이동 애니메이션
+   ============================================= */
+
+@keyframes card-arrive {
+  0% { transform: scale(1.08); }
+  50% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+@keyframes card-snap {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212,168,75,0); }
+  40% { transform: scale(1.1); box-shadow: 0 0 16px 4px rgba(212,168,75,0.6); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212,168,75,0); }
+}
+
+@keyframes bomb-flash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes capture-pulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-card-arrive { animation: card-arrive 0.15s ease-out; }
+.animate-card-snap { animation: card-snap 0.3s ease-out; }
+.animate-capture-arrive { animation: capture-pulse 0.2s ease-out; }
+
+.bomb-flash-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,68,68,0.2), transparent 70%);
+  animation: bomb-flash 0.4s ease-out forwards;
+  pointer-events: none;
+  z-index: 99;
+}
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

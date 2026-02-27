@@ -31,7 +31,7 @@ export default function TableField({
   }
 
   return (
-    <div className="flex flex-wrap justify-center gap-1.5 px-2 max-w-[340px]">
+    <div className="flex flex-wrap justify-center gap-1.5 px-2 max-w-[340px]" data-zone="table">
       {allCards.map(cardId => (
         <HwatuCard
           key={cardId}
@@ -40,6 +40,7 @@ export default function TableField({
           highlighted={highlightedCards.includes(cardId) || matchOptions.includes(cardId)}
           interactive={matchOptions.includes(cardId)}
           onClick={matchOptions.includes(cardId) ? onMatchSelect : undefined}
+          zone="table"
         />
       ))}
     </div>

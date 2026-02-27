@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/stores/useGameStore';
+import { useAnimationStore, animId } from '@/stores/useAnimationStore';
+import { captureZoneCenter, captureCardPosition, prefersReducedMotion } from '@/hooks/useCardPositions';
 import {
   aiChooseHandCard, aiSelectMatch as aiSelect,
   aiGoStopDecision, aiShouldBomb,
@@ -9,7 +11,6 @@ import {
 
 /**
  * AI 턴 자동 진행 훅
- * 게임 상태 변화를 감지하여 AI 행동을 자동 실행
  */
 export function useGameLoop() {
   const phase = useGameStore(s => s.phase);
@@ -32,7 +33,6 @@ export function useGameLoop() {
     // AI의 고/스톱 결정
     if (phase === 'go-stop-decision' && goStopPlayer !== null && goStopPlayer !== 0) {
       timerRef.current = setTimeout(() => {
-        // 최신 상태를 읽어서 stale closure 방지
         const freshState = useGameStore.getState()._state;
         if (!freshState || freshState.phase !== 'go-stop-decision') return;
         const decision = aiGoStopDecision(freshState, goStopPlayer);
@@ -47,7 +47,7 @@ export function useGameLoop() {
       };
     }
 
-    if (!isAI) return; // 플레이어 턴이면 대기
+    if (!isAI) return;
 
     switch (phase) {
       case 'play-hand': {
@@ -55,17 +55,37 @@ export function useGameLoop() {
           const freshState = useGameStore.getState()._state;
           if (!freshState || freshState.phase !== 'play-hand') return;
           const idx = freshState.turnIndex;
-          // 손패가 비었으면 스킵 (폭탄으로 조기 소진 대비)
           if (freshState.players[idx].hand.length === 0) return;
+
           // 폭탄 체크
           const bombMonth = aiShouldBomb(freshState, idx);
           if (bombMonth !== null) {
             useGameStore.getState().aiBomb(bombMonth);
             return;
           }
-          // 카드 내기
+
+          // AI 카드 출발 위치 캡처
+          const fromRect = captureZoneCenter(`opponent-${idx}`);
           const cardId = aiChooseHandCard(freshState, idx);
           useGameStore.getState().aiPlayCard(cardId);
+
+          // 애니메이션 등록
+          if (fromRect && !prefersReducedMotion()) {
+            requestAnimationFrame(() => {
+              const toRect = captureCardPosition(cardId, 'table') || captureZoneCenter('table');
+              if (toRect) {
+                useAnimationStore.getState().enqueue({
+                  id: animId('ai-play'),
+                  cardId,
+                  fromRect: { left: fromRect.left, top: fromRect.top, width: 36, height: 54 },
+                  toRect,
+                  type: 'play',
+                  duration: 300,
+                  delay: 0,
+                });
+              }
+            });
+          }
         }, 600 + Math.random() * 400);
         break;
       }
@@ -87,7 +107,33 @@ export function useGameLoop() {
         timerRef.current = setTimeout(() => {
           const freshState = useGameStore.getState()._state;
           if (!freshState || freshState.phase !== 'draw') return;
+
+          const fromRect = captureZoneCenter('draw');
           useGameStore.getState().aiDrawCard();
+
+          // 뽑기 애니메이션
+          if (fromRect && !prefersReducedMotion()) {
+            requestAnimationFrame(() => {
+              const state = useGameStore.getState();
+              const drawnCardId = state.currentTurnAction?.drawnCardId;
+              if (drawnCardId !== undefined && drawnCardId !== null) {
+                const toRect = captureCardPosition(drawnCardId, 'table') || captureZoneCenter('table');
+                if (toRect) {
+                  useAnimationStore.getState().enqueue({
+                    id: animId('ai-draw'),
+                    cardId: drawnCardId,
+                    fromRect: { left: fromRect.left, top: fromRect.top, width: 48, height: 72 },
+                    toRect,
+                    type: 'draw',
+                    faceDown: true,
+                    flipMidway: true,
+                    duration: 300,
+                    delay: 0,
+                  });
+                }
+              }
+            });
+          }
         }, 400);
         break;
       }
@@ -97,7 +143,7 @@ export function useGameLoop() {
           const freshState = useGameStore.getState()._state;
           if (!freshState || freshState.phase !== 'resolve-capture') return;
           useGameStore.getState().aiResolveCapture();
-        }, 300);
+        }, 450);
         break;
       }
     }
