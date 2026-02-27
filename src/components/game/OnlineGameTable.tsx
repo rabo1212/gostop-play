@@ -163,10 +163,10 @@ export default function OnlineGameTable({ roomId, roomCode }: OnlineGameTablePro
         </div>
       )}
 
-      {/* 상단: 상대 플레이어 */}
-      <div className="flex justify-around items-start pt-2 px-3">
+      {/* 상단: 상대 플레이어 (압축) */}
+      <div className="flex justify-around items-start pt-1 px-2 shrink-0">
         {opponents.map((opp, i) => (
-          <div key={opp.id} className="flex flex-col items-center gap-1">
+          <div key={opp.id} className="flex flex-col items-center">
             <OpponentHand
               cardCount={opp.handCount}
               name={opp.name}
@@ -178,13 +178,13 @@ export default function OnlineGameTable({ roomId, roomCode }: OnlineGameTablePro
         ))}
       </div>
 
-      {/* 중앙: 게임판 */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 px-3">
-        <div className="flex items-center gap-2 text-xs">
-          <span className="px-2 py-0.5 rounded bg-white/5 text-text-muted font-bold">
+      {/* 중앙: 바닥패 + 뽑을패 */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-1 px-2 min-h-0">
+        <div className="flex items-center gap-2 text-xs shrink-0">
+          <span className="px-2 py-0.5 rounded bg-white/5 text-text-muted font-bold text-[10px]">
             온라인
           </span>
-          <span className={`px-2 py-0.5 rounded font-bold ${
+          <span className={`px-2 py-0.5 rounded font-bold text-[11px] ${
             isMyTurn ? 'bg-gold/20 text-gold' : 'bg-white/10 text-text-muted'
           }`}>
             {isMyTurn ? '내 차례' : `${turnPlayerName} 차례`}
@@ -198,12 +198,12 @@ export default function OnlineGameTable({ roomId, roomCode }: OnlineGameTablePro
         </div>
 
         {isMatchSelect && (
-          <div className="text-xs text-gold animate-pulse-gold px-3 py-1 rounded bg-gold/10 border border-gold/20">
+          <div className="text-[11px] text-gold animate-pulse-gold px-2 py-0.5 rounded bg-gold/10 border border-gold/20 shrink-0">
             매칭할 카드를 선택하세요
           </div>
         )}
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <TableField
             tableCards={tableCardsMap}
             matchOptions={isMatchSelect ? gameState.pendingMatchOptions : []}
@@ -214,20 +214,21 @@ export default function OnlineGameTable({ roomId, roomCode }: OnlineGameTablePro
       </div>
 
       {/* 하단: 내 영역 */}
-      <div className="pb-3 px-2 space-y-1.5 shrink-0">
-        <div className="flex items-start gap-2">
+      <div className="pb-2 px-2 shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        {/* 점수 + 먹은 패 (가로 한 줄) */}
+        <div className="flex items-center gap-1.5 mb-1">
           <ScoreBoard score={myScore} goCount={myPlayer.goCount} />
           <div className="flex-1 overflow-x-auto no-scrollbar">
-            <CapturedCards captured={myPlayer.captured} compact playerId={0} />
+            <CapturedCards captured={myPlayer.captured} playerId={0} />
           </div>
         </div>
 
         {gameState.myBombOptions.length > 0 && (
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-2 mb-1">
             {gameState.myBombOptions.map(month => (
               <button
                 key={month}
-                className="action-btn action-btn-go px-3 py-1.5 text-xs"
+                className="action-btn action-btn-go px-3 py-1 text-[11px]"
                 onClick={() => handleBomb(month)}
                 disabled={actionPending}
               >
@@ -243,12 +244,6 @@ export default function OnlineGameTable({ roomId, roomCode }: OnlineGameTablePro
           canPlay={isMyTurn && phase === 'play-hand' && !actionPending}
           onCardClick={handleCardClick}
         />
-
-        {isMyTurn && phase === 'play-hand' && (
-          <p className="text-center text-[10px] text-text-muted">
-            카드를 터치하면 바로 냅니다
-          </p>
-        )}
       </div>
 
       {/* 오버레이 */}

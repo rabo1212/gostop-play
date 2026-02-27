@@ -235,10 +235,10 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
   return (
     <div className="table-bg fixed inset-0 flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
 
-      {/* ===== 상단: AI 플레이어들 ===== */}
-      <div className="flex justify-around items-start pt-2 px-3">
+      {/* ===== 상단: 상대 플레이어들 (압축) ===== */}
+      <div className="flex justify-around items-start pt-1 px-2 shrink-0">
         {players.slice(1).map((ai) => (
-          <div key={ai.id} className="flex flex-col items-center gap-1">
+          <div key={ai.id} className="flex flex-col items-center">
             <OpponentHand
               cardCount={ai.hand.length}
               name={ai.name}
@@ -250,30 +250,29 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
         ))}
       </div>
 
-      {/* ===== 중앙: 게임판 (바닥 카드 + 뽑을 패) ===== */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 px-3">
+      {/* ===== 중앙: 바닥패 + 뽑을패 ===== */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-1 px-2 min-h-0">
         {/* 턴 표시 */}
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs shrink-0">
           {roundLabel && (
-            <span className="px-2 py-0.5 rounded bg-white/5 text-text-muted font-bold">
+            <span className="px-2 py-0.5 rounded bg-white/5 text-text-muted font-bold text-[10px]">
               {roundLabel}
             </span>
           )}
-          <span className={`px-2 py-0.5 rounded font-bold ${isMyTurn ? 'bg-gold/20 text-gold' : 'bg-white/10 text-text-muted'}`}>
+          <span className={`px-2 py-0.5 rounded font-bold text-[11px] ${isMyTurn ? 'bg-gold/20 text-gold' : 'bg-white/10 text-text-muted'}`}>
             {isMyTurn ? '내 차례' : `${players[turnIndex]?.name} 차례`}
           </span>
-          <span className="text-text-muted text-[10px]">턴 {Math.ceil((useGameStore.getState().turnCount || 1) / 3)}</span>
         </div>
 
         {/* 매칭 선택 안내 */}
         {isMatchSelect && (
-          <div className="text-xs text-gold animate-pulse-gold px-3 py-1 rounded bg-gold/10 border border-gold/20">
+          <div className="text-[11px] text-gold animate-pulse-gold px-2 py-0.5 rounded bg-gold/10 border border-gold/20 shrink-0">
             매칭할 카드를 선택하세요
           </div>
         )}
 
-        {/* 바닥 카드 + 뽑을 패 더미 (가로 배치) */}
-        <div className="flex items-center gap-4">
+        {/* 바닥 카드 + 뽑을 패 더미 */}
+        <div className="flex items-center gap-3">
           <TableField
             tableCards={tableCards}
             matchOptions={isMatchSelect ? pendingMatchOptions : []}
@@ -284,22 +283,22 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
       </div>
 
       {/* ===== 하단: 내 영역 ===== */}
-      <div className="pb-3 px-2 space-y-1.5 shrink-0">
-        {/* 점수판 + 먹은 패 */}
-        <div className="flex items-start gap-2">
+      <div className="pb-2 px-2 shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+        {/* 점수 + 먹은 패 (가로 한 줄) */}
+        <div className="flex items-center gap-1.5 mb-1">
           <ScoreBoard score={myScore} goCount={myPlayer.goCount} />
           <div className="flex-1 overflow-x-auto no-scrollbar">
-            <CapturedCards captured={myPlayer.captured} compact playerId={0} />
+            <CapturedCards captured={myPlayer.captured} playerId={0} />
           </div>
         </div>
 
         {/* 폭탄 버튼 */}
         {bombOptions.length > 0 && (
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-2 mb-1">
             {bombOptions.map(month => (
               <button
                 key={month}
-                className="action-btn action-btn-go px-3 py-1.5 text-xs"
+                className="action-btn action-btn-go px-3 py-1 text-[11px]"
                 onClick={() => playerDeclareBomb(month)}
               >
                 {month}월 폭탄!
@@ -315,13 +314,6 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
           canPlay={isMyTurn && phase === 'play-hand'}
           onCardClick={handleCardClick}
         />
-
-        {/* 안내 텍스트 */}
-        {isMyTurn && phase === 'play-hand' && (
-          <p className="text-center text-[10px] text-text-muted">
-            카드를 터치하면 바로 냅니다
-          </p>
-        )}
       </div>
 
       {/* ===== 오버레이 ===== */}

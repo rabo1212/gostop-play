@@ -9,19 +9,19 @@ interface ScoreBoardProps {
 
 export default function ScoreBoard({ score, goCount }: ScoreBoardProps) {
   return (
-    <div className="bg-panel/80 rounded-lg border border-white/5 px-3 py-2">
-      <div className="flex items-center gap-3 text-xs">
+    <div className="bg-panel/80 rounded-lg border border-white/5 px-2 py-1.5 shrink-0">
+      <div className="flex items-center gap-2">
         <div className="text-center">
-          <div className="text-lg font-display font-bold text-gold">{score.baseScore}</div>
-          <div className="text-[10px] text-text-muted">점</div>
+          <div className="text-base font-display font-bold text-gold leading-tight">{score.baseScore}</div>
+          <div className="text-[9px] text-text-muted">점</div>
         </div>
 
         {score.combos.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-0.5">
             {score.combos.map(combo => (
               <span
                 key={combo.id}
-                className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gold/15 text-gold border border-gold/20"
+                className="px-1 py-0.5 rounded text-[9px] font-semibold bg-gold/15 text-gold border border-gold/20"
               >
                 {combo.nameKo}
               </span>
@@ -31,8 +31,8 @@ export default function ScoreBoard({ score, goCount }: ScoreBoardProps) {
 
         {goCount > 0 && (
           <div className="text-center">
-            <div className="text-sm font-bold text-hwatu-red">{goCount}고</div>
-            <div className="text-[10px] text-text-muted">×{Math.pow(2, goCount)}</div>
+            <div className="text-xs font-bold text-hwatu-red">{goCount}고</div>
+            <div className="text-[9px] text-text-muted">×{Math.pow(2, goCount)}</div>
           </div>
         )}
       </div>
