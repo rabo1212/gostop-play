@@ -174,40 +174,36 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
     }
   }, [phase, isMyTurn, playerDrawCard, playerResolveCapture, enqueue, soundEnabled]);
 
-  // 카드 클릭 핸들러 (애니메이션 포함)
+  // 카드 클릭 핸들러 (1탭으로 바로 내기)
   const handleCardClick = useCallback((cardId: CardId) => {
     if (!isMyTurn || phase !== 'play-hand') return;
 
-    if (selectedCard === cardId) {
-      // 출발 위치 캡처
-      const fromRect = captureCardPosition(cardId, 'hand-0');
+    // 출발 위치 캡처
+    const fromRect = captureCardPosition(cardId, 'hand-0');
 
-      // 상태 변경
-      playerPlayCard(cardId);
-      setSelectedCard(null);
-      if (soundEnabled) playCardPlace();
+    // 상태 변경
+    playerPlayCard(cardId);
+    setSelectedCard(null);
+    if (soundEnabled) playCardPlace();
 
-      // 애니메이션 등록
-      if (fromRect && !prefersReducedMotion()) {
-        requestAnimationFrame(() => {
-          const toRect = captureCardPosition(cardId, 'table') || captureZoneCenter('table');
-          if (toRect) {
-            enqueue({
-              id: animId('play'),
-              cardId,
-              fromRect,
-              toRect,
-              type: 'play',
-              duration: 250,
-              delay: 0,
-            });
-          }
-        });
-      }
-    } else {
-      setSelectedCard(cardId);
+    // 애니메이션 등록
+    if (fromRect && !prefersReducedMotion()) {
+      requestAnimationFrame(() => {
+        const toRect = captureCardPosition(cardId, 'table') || captureZoneCenter('table');
+        if (toRect) {
+          enqueue({
+            id: animId('play'),
+            cardId,
+            fromRect,
+            toRect,
+            type: 'play',
+            duration: 250,
+            delay: 0,
+          });
+        }
+      });
     }
-  }, [isMyTurn, phase, selectedCard, playerPlayCard, soundEnabled, enqueue]);
+  }, [isMyTurn, phase, playerPlayCard, soundEnabled, enqueue]);
 
   // 매칭 선택 핸들러
   const handleMatchSelect = useCallback((targetId: CardId) => {
@@ -323,7 +319,7 @@ export default function GameTable({ onBackToMenu, onNextRound, roundLabel }: Gam
         {/* 안내 텍스트 */}
         {isMyTurn && phase === 'play-hand' && (
           <p className="text-center text-[10px] text-text-muted">
-            {selectedCard !== null ? '다시 터치하면 카드를 냅니다' : '카드를 터치해 선택하세요'}
+            카드를 터치하면 바로 냅니다
           </p>
         )}
       </div>
