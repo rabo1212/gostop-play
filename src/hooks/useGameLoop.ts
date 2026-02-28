@@ -41,7 +41,7 @@ export function useGameLoop() {
         } else {
           useGameStore.getState().aiDeclareStop();
         }
-      }, 800);
+      }, 1200 + Math.random() * 400);
       return () => {
         if (timerRef.current) clearTimeout(timerRef.current);
       };
@@ -80,13 +80,13 @@ export function useGameLoop() {
                   fromRect: { left: fromRect.left, top: fromRect.top, width: 36, height: 54 },
                   toRect,
                   type: 'play',
-                  duration: 300,
+                  duration: 400,
                   delay: 0,
                 });
               }
             });
           }
-        }, 600 + Math.random() * 400);
+        }, 1200 + Math.random() * 600);
         break;
       }
 
@@ -99,7 +99,7 @@ export function useGameLoop() {
           const opts = freshState.pendingMatchOptions;
           const target = aiSelect(freshState, freshState.turnIndex, opts);
           useGameStore.getState().aiSelectMatch(target);
-        }, 400);
+        }, 700 + Math.random() * 300);
         break;
       }
 
@@ -127,14 +127,14 @@ export function useGameLoop() {
                     type: 'draw',
                     faceDown: true,
                     flipMidway: true,
-                    duration: 300,
+                    duration: 400,
                     delay: 0,
                   });
                 }
               }
             });
           }
-        }, 400);
+        }, 800 + Math.random() * 300);
         break;
       }
 
@@ -143,7 +143,7 @@ export function useGameLoop() {
           const freshState = useGameStore.getState()._state;
           if (!freshState || freshState.phase !== 'resolve-capture') return;
           useGameStore.getState().aiResolveCapture();
-        }, 450);
+        }, 900);
         break;
       }
     }
